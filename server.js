@@ -1,19 +1,22 @@
-// Atualização no server.js
 const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-const DATA_FILE = "messages.json";
+const PORT = process.env.PORT || 3000;
+const DATA_FILE = path.join(__dirname, "messages.json");
+
+// Garantir que o arquivo JSON existe
+if (!fs.existsSync(DATA_FILE)) {
+    fs.writeFileSync(DATA_FILE, "[]", "utf8");
+}
 
 function loadMessages() {
-    if (fs.existsSync(DATA_FILE)) {
-        return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-    }
-    return [];
+    return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
 }
 
 function saveMessages(messages) {
@@ -26,7 +29,7 @@ app.post("/save-message", (req, res) => {
     const messages = loadMessages();
     messages.push({ user, content, timestamp, isImage, reactions: [] });
     saveMessages(messages);
-    res.send({ success: true });
+    res.json({ success: true });
 });
 
 // Rota para salvar reações
@@ -37,7 +40,7 @@ app.post("/react", (req, res) => {
         messages[index].reactions.push(reaction);
         saveMessages(messages);
     }
-    res.send({ success: true });
+    res.json({ success: true });
 });
 
 // Rota para carregar mensagens
@@ -45,4 +48,5 @@ app.get("/load-messages", (req, res) => {
     res.json(loadMessages());
 });
 
-app.listen(3000, () => console.log("Servidor rodando na porta 3000"));
+// Inicia o servidor
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
