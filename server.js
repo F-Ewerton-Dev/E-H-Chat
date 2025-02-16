@@ -1,101 +1,43 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #121212; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: white; width: 100vw; }
-        .container { width: 100vw; height: 100vh; background: #1e1e1e; display: none; flex-direction: column; }
-        .login-container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); width: 90%; max-width: 350px; }
-        .login-container button { padding: 12px; width: 100%; margin: 10px 0; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        .ewerton-btn { background: #25d366; color: white; }
-        .hellen-btn { background: #ff4081; color: white; }
-        .header { background: #075e54; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; }
-        .messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; }
-        .message { padding: 10px; border-radius: 8px; margin: 5px; max-width: 70%; word-wrap: break-word; font-size: 14px; position: relative; cursor: pointer; }
-        .ewerton { background: #0b8043; align-self: flex-start; color: white; }
-        .hellen { background: #282828; align-self: flex-end; color: white; }
-        .timestamp { font-size: 10px; color: #ccc; position: absolute; bottom: -15px; right: 5px; }
-        .input-area { display: flex; align-items: center; padding: 10px; background: #1e1e1e; border-top: 1px solid #333; }
-        .input-area input { flex: 1; padding: 10px; border: 1px solid #444; border-radius: 5px; font-size: 14px; background: #333; color: white; }
-        .input-area button { background: #25d366; color: white; border: none; padding: 10px 15px; border-radius: 5px; margin-left: 5px; cursor: pointer; font-size: 14px; }
-        .input-area input[type="file"] { display: none; }
-        .input-area label { background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="login-container" id="login-container">
-        <h2>Escolha seu usuário</h2>
-        <button class="ewerton-btn" onclick="login('Ewerton')">👨‍💻 Ewerton</button>
-        <button class="hellen-btn" onclick="login('Hellen')">👩‍🦰 Hellen</button>
-    </div>
-    <div class="container" id="chat-container">
-        <div class="header" id="chat-title">Chat</div>
-        <div class="messages" id="messages"></div>
-        <div class="input-area">
-            <input type="text" id="messageInput" placeholder="Digite uma mensagem...">
-            <input type="file" id="fileInput" accept="image/*" onchange="sendImage()">
-            <label for="fileInput">📷</label>
-            <button onclick="sendMessage()">Enviar</button>
-        </div>
-    </div>
-    <script>
-        let currentUser = "";
-        const SERVER_URL = "http://localhost:10000";
+const express = require("express");
+const cors = require("cors");
+const fs = require("fs");
+const path = require("path");
+const multer = require("multer");
 
-        function login(user) {
-            currentUser = user;
-            document.getElementById("login-container").style.display = "none";
-            document.getElementById("chat-container").style.display = "flex";
-            document.getElementById("chat-title").innerText = `Chat - ${user}`;
-            loadMessages();
-        }
+const app = express();
+app.use(express.json());
+app.use(cors());
+app.use(express.static("public"));
 
-        async function sendMessage() {
-            let text = document.getElementById("messageInput").value.trim();
-            if (!text) return;
+const PORT = 10000;
+const DATA_FILE = path.join(__dirname, "messages.json");
+const UPLOAD_DIR = path.join(__dirname, "public/uploads");
 
-            await fetch(`${SERVER_URL}/save-message`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user: currentUser, content: text })
-            });
-            document.getElementById("messageInput").value = "";
-            loadMessages();
-        }
+if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "[]", "utf8");
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
-        async function sendImage() {
-            let fileInput = document.getElementById("fileInput");
-            let file = fileInput.files[0];
-            if (!file) return;
+const storage = multer.diskStorage({
+    destination: UPLOAD_DIR,
+    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const upload = multer({ storage });
 
-            let formData = new FormData();
-            formData.append("image", file);
-            formData.append("user", currentUser);
+app.post("/save-message", (req, res) => {
+    const messages = JSON.parse(fs.readFileSync(DATA_FILE));
+    messages.push({ user: req.body.user, content: req.body.content });
+    fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
+    res.json({ success: true });
+});
 
-            await fetch(`${SERVER_URL}/save-image`, { method: "POST", body: formData });
-            fileInput.value = "";
-            loadMessages();
-        }
+app.post("/save-image", upload.single("image"), (req, res) => {
+    const messages = JSON.parse(fs.readFileSync(DATA_FILE));
+    messages.push({ user: req.body.user, image: `/uploads/${req.file.filename}` });
+    fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
+    res.json({ success: true });
+});
 
-        async function loadMessages() {
-            let response = await fetch(`${SERVER_URL}/load-messages`);
-            let messages = await response.json();
-            let messagesContainer = document.getElementById("messages");
-            messagesContainer.innerHTML = "";
+app.get("/load-messages", (req, res) => {
+    res.json(JSON.parse(fs.readFileSync(DATA_FILE)));
+});
 
-            messages.forEach(msg => {
-                let div = document.createElement("div");
-                div.classList.add("message", msg.user.toLowerCase());
-                if (msg.content) {
-                    div.innerHTML = `${msg.content}`;
-                } else if (msg.image) {
-                    div.innerHTML = `<img src="${msg.image}" style="max-width: 100%; border-radius: 8px;">`;
-                }
-                messagesContainer.appendChild(div);
-            });
-        }
-    </script>
-</body>
-</html>
+app.listen(PORT, () => console.log(`Servidor rodando em http://localhost:${PORT}`));
