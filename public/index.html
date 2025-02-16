@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat</title>
+    <title>Hellen & Ewerton</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #121212; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: white; width: 100vw; }
         .container { width: 100vw; height: 100vh; background: #1e1e1e; display: none; flex-direction: column; }
@@ -20,8 +20,7 @@
         .input-area { display: flex; align-items: center; padding: 10px; background: #1e1e1e; border-top: 1px solid #333; }
         .input-area input { flex: 1; padding: 10px; border: 1px solid #444; border-radius: 5px; font-size: 14px; background: #333; color: white; }
         .input-area button { background: #25d366; color: white; border: none; padding: 10px 15px; border-radius: 5px; margin-left: 5px; cursor: pointer; font-size: 14px; }
-        .input-area input[type="file"] { display: none; }
-        .input-area label { background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+        .input-area button:hover { background: #1ebe57; }
     </style>
 </head>
 <body>
@@ -35,65 +34,45 @@
         <div class="messages" id="messages"></div>
         <div class="input-area">
             <input type="text" id="messageInput" placeholder="Digite uma mensagem...">
-            <input type="file" id="fileInput" accept="image/*" onchange="sendImage()">
-            <label for="fileInput">📷</label>
             <button onclick="sendMessage()">Enviar</button>
         </div>
     </div>
     <script>
         let currentUser = "";
-        const SERVER_URL = "http://localhost:10000";
+        const SERVER_URL = "";
 
         function login(user) {
             currentUser = user;
             document.getElementById("login-container").style.display = "none";
             document.getElementById("chat-container").style.display = "flex";
-            document.getElementById("chat-title").innerText = `Chat - ${user}`;
+            document.querySelector(".header").innerHTML = user;
             loadMessages();
         }
 
         async function sendMessage() {
-            let text = document.getElementById("messageInput").value.trim();
-            if (!text) return;
+            let input = document.getElementById("messageInput");
+            let text = input.value.trim();
+            if (text === "") return;
 
+            let timestamp = new Date().toLocaleTimeString();
             await fetch(`${SERVER_URL}/save-message`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user: currentUser, content: text })
+                body: JSON.stringify({ user: currentUser, content: text, timestamp })
             });
-            document.getElementById("messageInput").value = "";
-            loadMessages();
-        }
-
-        async function sendImage() {
-            let fileInput = document.getElementById("fileInput");
-            let file = fileInput.files[0];
-            if (!file) return;
-
-            let formData = new FormData();
-            formData.append("image", file);
-            formData.append("user", currentUser);
-
-            await fetch(`${SERVER_URL}/save-image`, { method: "POST", body: formData });
-            fileInput.value = "";
+            input.value = "";
             loadMessages();
         }
 
         async function loadMessages() {
             let response = await fetch(`${SERVER_URL}/load-messages`);
             let messages = await response.json();
-            let messagesContainer = document.getElementById("messages");
-            messagesContainer.innerHTML = "";
-
+            document.getElementById("messages").innerHTML = "";
             messages.forEach(msg => {
                 let div = document.createElement("div");
                 div.classList.add("message", msg.user.toLowerCase());
-                if (msg.content) {
-                    div.innerHTML = `${msg.content}`;
-                } else if (msg.image) {
-                    div.innerHTML = `<img src="${msg.image}" style="max-width: 100%; border-radius: 8px;">`;
-                }
-                messagesContainer.appendChild(div);
+                div.innerHTML = `${msg.content} <span class='timestamp'>${msg.timestamp}</span>`;
+                document.getElementById("messages").appendChild(div);
             });
         }
     </script>
