@@ -1,58 +1,54 @@
-const express = require("express");
-const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
-const multer = require("multer");
+const express = require('express');
+const multer = require('multer');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+
+// Criação da pasta uploads se não existir
+const uploadsDir = './uploads';
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
 
 const app = express();
-app.use(express.json());
+
+// Habilitar CORS para requisições de outros domínios
 app.use(cors());
-app.use(express.static("public")); // Certifica que os arquivos estáticos estão acessíveis
 
-const PORT = process.env.PORT || 10000; // Ajuste para Render
-const DATA_FILE = path.join(__dirname, "messages.json");
-const UPLOAD_DIR = path.join(__dirname, "public/uploads");
-
-// Garantir que o arquivo messages.json existe
-if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, "[]", "utf8");
-
-// Criar diretório uploads se não existir
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
+// Configuração do multer para armazenamento de arquivos
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, UPLOAD_DIR);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir); // Salvar as imagens na pasta 'uploads'
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname)); // Nome com timestamp
+  },
 });
 
-const upload = multer({ storage });
-
-// Rota para salvar mensagens de texto
-app.post("/save-message", (req, res) => {
-    const messages = JSON.parse(fs.readFileSync(DATA_FILE));
-    messages.push({ user: req.body.user, content: req.body.content });
-    fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
-    res.json({ success: true });
+// Criando o middleware do multer com o storage configurado
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // Limite de 10MB por imagem
 });
 
-// Rota para upload de imagem
-app.post("/save-image", upload.single("image"), (req, res) => {
-    if (!req.file) return res.status(400).json({ error: "Nenhuma imagem enviada" });
-
-    const messages = JSON.parse(fs.readFileSync(DATA_FILE));
-    const imageUrl = `/uploads/${req.file.filename}`; // Caminho correto da imagem
-    messages.push({ user: req.body.user, image: imageUrl });
-    fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
-    res.json({ success: true, imageUrl });
+// Rota para fazer o upload de uma imagem
+app.post('/upload', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded');
+  }
+  // Enviar a URL do arquivo para o cliente
+  res.status(200).send({
+    message: 'File uploaded successfully',
+    file: req.file,
+    fileUrl: `/uploads/${req.file.filename}`,
+  });
 });
 
-// Rota para carregar mensagens
-app.get("/load-messages", (req, res) => {
-    res.json(JSON.parse(fs.readFileSync(DATA_FILE)));
-});
+// Servir arquivos estáticos (imagens) da pasta 'uploads'
+app.use('/uploads', express.static(uploadsDir));
 
-// Inicia o servidor
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+// Roda o servidor na porta configurada
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
