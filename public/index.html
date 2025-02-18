@@ -42,7 +42,7 @@
     </div>
     <script>
         let currentUser = "";
-        const SERVER_URL = "https://e-h-chat.onrender.com"; // Substituir pela URL real
+        const SERVER_URL = ""; // O próprio domínio do Render
 
         function login(user) {
             currentUser = user;
@@ -56,7 +56,7 @@
             let text = document.getElementById("messageInput").value.trim();
             if (!text) return;
 
-            await fetch(`${SERVER_URL}/save-message`, {
+            await fetch("/save-message", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ user: currentUser, content: text })
@@ -74,13 +74,13 @@
             formData.append("image", file);
             formData.append("user", currentUser);
 
-            await fetch(`${SERVER_URL}/save-image`, { method: "POST", body: formData });
+            await fetch("/save-image", { method: "POST", body: formData });
             fileInput.value = "";
             loadMessages();
         }
 
         async function loadMessages() {
-            let response = await fetch(`${SERVER_URL}/load-messages`);
+            let response = await fetch("/load-messages");
             let messages = await response.json();
             let messagesContainer = document.getElementById("messages");
             messagesContainer.innerHTML = "";
@@ -88,7 +88,7 @@
             messages.forEach(msg => {
                 let div = document.createElement("div");
                 div.classList.add("message", msg.user.toLowerCase());
-                div.innerHTML = msg.content || `<img src="${SERVER_URL}${msg.image}" style="max-width: 100%; border-radius: 8px;">`;
+                div.innerHTML = msg.content || `<img src="/uploads/${msg.image}" style="max-width: 100%; border-radius: 8px;">`;
                 messagesContainer.appendChild(div);
             });
         }
