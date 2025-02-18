@@ -42,7 +42,7 @@
     </div>
     <script>
         let currentUser = "";
-        const SERVER_URL = "http://localhost:10000";
+        const SERVER_URL = "https://seu-servidor-no-render.onrender.com"; // Substituir pela URL real
 
         function login(user) {
             currentUser = user;
@@ -88,11 +88,7 @@
             messages.forEach(msg => {
                 let div = document.createElement("div");
                 div.classList.add("message", msg.user.toLowerCase());
-                if (msg.content) {
-                    div.innerHTML = `${msg.content}`;
-                } else if (msg.image) {
-                    div.innerHTML = `<img src="${msg.image}" style="max-width: 100%; border-radius: 8px;">`;
-                }
+                div.innerHTML = msg.content || `<img src="${SERVER_URL}${msg.image}" style="max-width: 100%; border-radius: 8px;">`;
                 messagesContainer.appendChild(div);
             });
         }
