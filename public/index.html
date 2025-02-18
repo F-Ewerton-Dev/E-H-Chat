@@ -22,8 +22,6 @@
         .input-area button { background: #25d366; color: white; border: none; padding: 10px 15px; border-radius: 5px; margin-left: 5px; cursor: pointer; font-size: 14px; }
         .input-area input[type="file"] { display: none; }
         .input-area label { background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
-        .delete-btn { background: red; color: white; border: none; padding: 5px; border-radius: 5px; cursor: pointer; font-size: 12px; position: absolute; top: 5px; right: 5px; }
-        .reply-btn { background: #ffeb3b; color: black; border: none; padding: 5px; border-radius: 5px; cursor: pointer; font-size: 12px; position: absolute; bottom: -20px; right: 5px; }
     </style>
 </head>
 <body>
@@ -37,13 +35,14 @@
         <div class="messages" id="messages"></div>
         <div class="input-area">
             <input type="text" id="messageInput" placeholder="Digite uma mensagem...">
-            <input type="file" id="fileInput" accept="image/*,video/*" onchange="sendMedia()">
+            <input type="file" id="fileInput" accept="image/*" onchange="sendImage()">
             <label for="fileInput">📷</label>
             <button onclick="sendMessage()">Enviar</button>
         </div>
     </div>
     <script>
         let currentUser = "";
+        const SERVER_URL = ""; // O próprio domínio do Render
 
         function login(user) {
             currentUser = user;
@@ -66,16 +65,16 @@
             loadMessages();
         }
 
-        async function sendMedia() {
+        async function sendImage() {
             let fileInput = document.getElementById("fileInput");
             let file = fileInput.files[0];
             if (!file) return;
 
             let formData = new FormData();
-            formData.append("media", file);
+            formData.append("image", file);
             formData.append("user", currentUser);
 
-            await fetch("/save-media", { method: "POST", body: formData });
+            await fetch("/save-image", { method: "POST", body: formData });
             fileInput.value = "";
             loadMessages();
         }
@@ -89,12 +88,7 @@
             messages.forEach(msg => {
                 let div = document.createElement("div");
                 div.classList.add("message", msg.user.toLowerCase());
-                div.innerHTML = msg.content || `<img src="/uploads/${msg.media}" style="max-width: 100%; border-radius: 8px;">`;
-                let deleteBtn = document.createElement("button");
-                deleteBtn.classList.add("delete-btn");
-                deleteBtn.innerText = "❌";
-                deleteBtn.onclick = () => deleteMessage(msg.id);
-                div.appendChild(deleteBtn);
+                div.innerHTML = msg.content || `<img src="/uploads/${msg.image}" style="max-width: 100%; border-radius: 8px;">`;
                 messagesContainer.appendChild(div);
             });
         }
