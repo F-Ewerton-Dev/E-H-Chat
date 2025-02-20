@@ -31,9 +31,9 @@ app.post("/save-message", (req, res) => {
     res.json({ success: true });
 });
 
-app.post("/save-image", upload.single("image"), (req, res) => {
+app.post("/save-media", upload.single("media"), (req, res) => {
     const messages = JSON.parse(fs.readFileSync(DATA_FILE));
-    messages.push({ user: req.body.user, image: req.file.filename });
+    messages.push({ user: req.body.user, media: req.file.filename });
     fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
     res.json({ success: true });
 });
