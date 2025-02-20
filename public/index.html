@@ -13,7 +13,7 @@
         .hellen-btn { background: #ff4081; color: white; }
         .header { background: #075e54; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; }
         .messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; }
-        .message { padding: 10px; border-radius: 8px; margin: 5px; max-width: 70%; word-wrap: break-word; font-size: 14px; position: relative; cursor: pointer; display: flex; align-items: center; }
+        .message { padding: 10px; border-radius: 8px; margin: 5px; max-width: 70%; word-wrap: break-word; font-size: 14px; position: relative; cursor: pointer; }
         .ewerton { background: #0b8043; align-self: flex-start; color: white; }
         .hellen { background: #282828; align-self: flex-end; color: white; }
         .timestamp { font-size: 10px; color: #ccc; position: absolute; bottom: -15px; right: 5px; }
@@ -22,7 +22,6 @@
         .input-area button { background: #25d366; color: white; border: none; padding: 10px 15px; border-radius: 5px; margin-left: 5px; cursor: pointer; font-size: 14px; }
         .input-area input[type="file"] { display: none; }
         .input-area label { background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
-        .delete-btn { margin-left: 10px; cursor: pointer; color: red; font-size: 16px; background: none; border: none; }
     </style>
 </head>
 <body>
@@ -36,15 +35,14 @@
         <div class="messages" id="messages"></div>
         <div class="input-area">
             <input type="text" id="messageInput" placeholder="Digite uma mensagem...">
-            <input type="file" id="fileInput" accept="image/*" onchange="sendImage()">
-            <label for="fileInput">📷</label>
+            <input type="file" id="fileInput" accept="image/*,video/*" onchange="sendMedia()">
+            <label for="fileInput">📷🎥</label>
             <button onclick="sendMessage()">Enviar</button>
         </div>
     </div>
     <script>
         let currentUser = "";
-        const SERVER_URL = ""; // O próprio domínio do Render
-
+        
         function login(user) {
             currentUser = user;
             document.getElementById("login-container").style.display = "none";
@@ -66,22 +64,17 @@
             loadMessages();
         }
 
-        async function sendImage() {
+        async function sendMedia() {
             let fileInput = document.getElementById("fileInput");
             let file = fileInput.files[0];
             if (!file) return;
 
             let formData = new FormData();
-            formData.append("image", file);
+            formData.append("media", file);
             formData.append("user", currentUser);
 
-            await fetch("/save-image", { method: "POST", body: formData });
+            await fetch("/save-media", { method: "POST", body: formData });
             fileInput.value = "";
-            loadMessages();
-        }
-
-        async function deleteMessage(id) {
-            await fetch(`/delete-message/${id}`, { method: "DELETE" });
             loadMessages();
         }
 
@@ -94,13 +87,17 @@
             messages.forEach(msg => {
                 let div = document.createElement("div");
                 div.classList.add("message", msg.user.toLowerCase());
-
+                
                 if (msg.content) {
-                    div.innerHTML = `${msg.content} <button class="delete-btn" onclick="deleteMessage('${msg.id}')">🗑️</button>`;
-                } else if (msg.image) {
-                    div.innerHTML = `<img src="/uploads/${msg.image}" style="max-width: 100%; border-radius: 8px;"> <button class="delete-btn" onclick="deleteMessage('${msg.id}')">🗑️</button>`;
+                    div.innerText = msg.content;
+                } else if (msg.media) {
+                    let fileExtension = msg.media.split('.').pop();
+                    if (["mp4", "webm", "ogg"].includes(fileExtension)) {
+                        div.innerHTML = `<video controls style="max-width: 100%; border-radius: 8px;"><source src="/uploads/${msg.media}" type="video/${fileExtension}"></video>`;
+                    } else {
+                        div.innerHTML = `<img src="/uploads/${msg.media}" style="max-width: 100%; border-radius: 8px;">`;
+                    }
                 }
-
                 messagesContainer.appendChild(div);
             });
         }
