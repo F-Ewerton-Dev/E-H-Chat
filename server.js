@@ -40,4 +40,5 @@ app.post("/save-media", upload.single("media"), (req, res) => {
 
 app.get("/load-messages", (req, res) => res.json(JSON.parse(fs.readFileSync(DATA_FILE))));
 
-app.listen(PORT, () => console.log(Servidor rodando na porta ${PORT}));
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
