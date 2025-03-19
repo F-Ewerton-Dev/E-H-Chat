@@ -38,7 +38,45 @@ app.post("/save-media", upload.single("media"), (req, res) => {
     res.json({ success: true });
 });
 
+app.post("/save-single-view-media", upload.single("media"), (req, res) => {
+    const messages = JSON.parse(fs.readFileSync(DATA_FILE));
+    messages.push({
+        user: req.body.user,
+        media: req.file.filename,
+        singleView: true,
+        viewed: false,
+        viewedBy: null // Armazena quem visualizou
+    });
+    fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
+    res.json({ success: true });
+});
+
+app.post("/mark-as-viewed", (req, res) => {
+    const messages = JSON.parse(fs.readFileSync(DATA_FILE));
+    const messageIndex = messages.findIndex(msg => msg.media === req.body.media);
+    
+    if (messageIndex !== -1) {
+        messages[messageIndex].viewed = true;
+        messages[messageIndex].viewedBy = req.body.viewer; // Armazena quem visualizou
+        fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
+        res.json({ success: true });
+    } else {
+        res.status(404).json({ success: false, message: "Mensagem não encontrada." });
+    }
+});
+
 app.get("/load-messages", (req, res) => res.json(JSON.parse(fs.readFileSync(DATA_FILE))));
 
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
 
+app.post("/save-message", (req, res) => {
+    const messages = JSON.parse(fs.readFileSync(DATA_FILE));
+    const messageData = {
+        user: req.body.user,
+        content: req.body.content,
+        replyTo: req.body.replyTo || null // Armazena a referência à mensagem respondida
+    };
+    messages.push(messageData);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
+    res.json({ success: true });
+});
