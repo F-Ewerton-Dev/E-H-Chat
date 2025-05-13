@@ -22,12 +22,17 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-app.use("/uploads", express.static(UPLOAD_DIR));
+app.use("/uploads", (req, res, next) => {
+    res.set({
+        "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    });
+    next();
+}, express.static(UPLOAD_DIR));
 
-// Variável para status de digitação
-let typingStatus = {}; // { Ewerton: true, Hellen: false }
+let typingStatus = {};
 
-// Endpoint: salvar mensagem de texto
 app.post("/save-message", (req, res) => {
     const messages = JSON.parse(fs.readFileSync(DATA_FILE));
     const messageData = {
@@ -38,10 +43,14 @@ app.post("/save-message", (req, res) => {
     };
     messages.push(messageData);
     fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
+    res.set({
+        "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    });
     res.json({ success: true });
 });
 
-// Endpoint: salvar mídia
 app.post("/save-media", upload.single("media"), (req, res) => {
     const messages = JSON.parse(fs.readFileSync(DATA_FILE));
     messages.push({
@@ -50,10 +59,14 @@ app.post("/save-media", upload.single("media"), (req, res) => {
         timestamp: Date.now()
     });
     fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
+    res.set({
+        "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    });
     res.json({ success: true });
 });
 
-// Endpoint: salvar mídia de visualização única
 app.post("/save-single-view-media", upload.single("media"), (req, res) => {
     const messages = JSON.parse(fs.readFileSync(DATA_FILE));
     messages.push({
@@ -65,40 +78,59 @@ app.post("/save-single-view-media", upload.single("media"), (req, res) => {
         timestamp: Date.now()
     });
     fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
+    res.set({
+        "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    });
     res.json({ success: true });
 });
 
-// Endpoint: marcar mídia como visualizada
 app.post("/mark-as-viewed", (req, res) => {
     const messages = JSON.parse(fs.readFileSync(DATA_FILE));
     const messageIndex = messages.findIndex(msg => msg.media === req.body.media);
-
     if (messageIndex !== -1) {
         messages[messageIndex].viewed = true;
         messages[messageIndex].viewedBy = req.body.viewer;
         fs.writeFileSync(DATA_FILE, JSON.stringify(messages));
+        res.set({
+            "Cache-Control": "no-store, no-cache, must-revalidate, private",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        });
         res.json({ success: true });
     } else {
         res.status(404).json({ success: false, message: "Mensagem não encontrada." });
     }
 });
 
-// Endpoint: carregar todas as mensagens
 app.get("/load-messages", (req, res) => {
+    res.set({
+        "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    });
     res.json(JSON.parse(fs.readFileSync(DATA_FILE)));
 });
 
-// Endpoint: atualizar status de digitação
 app.post("/typing", (req, res) => {
     const { user, typing } = req.body;
     typingStatus[user] = typing;
+    res.set({
+        "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    });
     res.json({ success: true });
 });
 
-// Endpoint: pegar status de digitação
 app.get("/typing-status", (req, res) => {
+    res.set({
+        "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    });
     res.json(typingStatus);
 });
 
-// Inicia o servidor
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
