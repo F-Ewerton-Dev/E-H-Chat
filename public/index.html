@@ -75,7 +75,7 @@
             <button onclick="sendMessage()">Enviar</button>
             <input type="file" id="fileInput" accept="image/*,video/*" onchange="sendMedia()">
             <label for="fileInput">📷</label>
-            <button onclick="openCameraOverlay()">📸 Tirar Foto</button>
+            
             <!-- Novo botão para visualização única -->
             <input type="file" id="singleViewInput" accept="image/*,video/*" style="display: none;" onchange="sendSingleViewMedia()">
             <label for="singleViewInput" style="background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer;">📷🔂</label>
@@ -93,14 +93,6 @@
             <button onclick="closeOverlay()">Fechar</button>
         </div>
     </div>
-
-    <div id="cameraOverlay" class="overlay">
-    <div class="overlay-content">
-        <video id="cameraView" autoplay playsinline style="max-width: 100%; border-radius: 8px;"></video>
-        <button onclick="capturePhoto()">📷 Capturar Foto</button>
-        <button onclick="closeCamera()">Fechar</button>
-    </div>
-</div>
 
     <script>
         let currentUser = "";
@@ -375,55 +367,6 @@ function updateTypingIndicator() {
 }
 setInterval(updateTypingIndicator, 500);
 
-
-let cameraStream = null;
-
-async function openCamera() {
-    const overlay = document.getElementById("cameraOverlay");
-    const video = document.getElementById("cameraView");
-
-    try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = cameraStream;
-        overlay.style.display = "flex";
-    } catch (err) {
-        alert("Não foi possível acessar a câmera.");
-        console.error("Erro ao acessar câmera:", err);
-    }
-}
-
-function closeCamera() {
-    const overlay = document.getElementById("cameraOverlay");
-    overlay.style.display = "none";
-    if (cameraStream) {
-        const tracks = cameraStream.getTracks();
-        tracks.forEach(track => track.stop());
-    }
-}
-
-function capturePhoto() {
-    const video = document.getElementById("cameraView");
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const context = canvas.getContext("2d");
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob(async (blob) => {
-        const formData = new FormData();
-        formData.append("media", blob, "photo.jpg");
-        formData.append("user", currentUser);
-
-        await fetch("/save-media", {
-            method: "POST",
-            body: formData
-        });
-
-        closeCamera();
-        loadMessages();
-    }, "image/jpeg", 0.9);
-}
 
     </script>
 </body>
