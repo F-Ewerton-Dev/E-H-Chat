@@ -94,12 +94,11 @@
         </div>
     </div>
 
-    <div class="overlay" id="camera-overlay">
+    <div id="cameraOverlay" class="overlay">
     <div class="overlay-content">
-        <video id="camera-video" autoplay playsinline style="max-width: 100%; border-radius: 8px;"></video>
-        <br>
-        <button onclick="takePhoto()">📷 Tirar Foto</button>
-        <button onclick="closeCameraOverlay()">Cancelar</button>
+        <video id="cameraView" autoplay playsinline style="max-width: 100%; border-radius: 8px;"></video>
+        <button onclick="capturePhoto()">📷 Capturar Foto</button>
+        <button onclick="closeCamera()">Fechar</button>
     </div>
 </div>
 
@@ -377,35 +376,33 @@ function updateTypingIndicator() {
 setInterval(updateTypingIndicator, 500);
 
 
-let cameraStream;
+let cameraStream = null;
 
-async function openCameraOverlay() {
-    const overlay = document.getElementById("camera-overlay");
-    const video = document.getElementById("camera-video");
+async function openCamera() {
+    const overlay = document.getElementById("cameraOverlay");
+    const video = document.getElementById("cameraView");
 
     try {
         cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = cameraStream;
         overlay.style.display = "flex";
     } catch (err) {
-        alert("Erro ao acessar a câmera: " + err.message);
+        alert("Não foi possível acessar a câmera.");
+        console.error("Erro ao acessar câmera:", err);
     }
 }
 
-function closeCameraOverlay() {
-    const overlay = document.getElementById("camera-overlay");
-    const video = document.getElementById("camera-video");
-
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-    }
-
-    video.srcObject = null;
+function closeCamera() {
+    const overlay = document.getElementById("cameraOverlay");
     overlay.style.display = "none";
+    if (cameraStream) {
+        const tracks = cameraStream.getTracks();
+        tracks.forEach(track => track.stop());
+    }
 }
 
-async function takePhoto() {
-    const video = document.getElementById("camera-video");
+function capturePhoto() {
+    const video = document.getElementById("cameraView");
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -415,16 +412,18 @@ async function takePhoto() {
 
     canvas.toBlob(async (blob) => {
         const formData = new FormData();
-        formData.append("media", blob, "captura.jpg");
+        formData.append("media", blob, "photo.jpg");
         formData.append("user", currentUser);
 
-        await fetch("/save-media", { method: "POST", body: formData });
+        await fetch("/save-media", {
+            method: "POST",
+            body: formData
+        });
 
-        closeCameraOverlay();
+        closeCamera();
         loadMessages();
-    }, "image/jpeg", 0.95);
+    }, "image/jpeg", 0.9);
 }
-
 
     </script>
 </body>
