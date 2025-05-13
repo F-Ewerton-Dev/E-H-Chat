@@ -43,17 +43,23 @@
         /* Estilos para o botão de gravação */
         .record-btn { background: #ff4081; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-left: 5px; }
         .record-btn.recording { background: #ff0000; }
+
+        /* Estilos para a tela de bloqueio */
+        #lock-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 9999; overflow: hidden; }
+        #lock-screen img { width: auto; height: 100vh; display: block; margin: 0 auto; }
+        .lock-buttons { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 15px; z-index: 10000; }
+        .lock-buttons button { width: 50px; height: 50px; background: transparent; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
     <!-- Tela de bloqueio -->
-    <div id="lock-screen" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; overflow:hidden;">
-        <img src="image.png" alt="Tela de Bloqueio" style="width:auto; height:100vh; display:block; margin:0 auto;" />
-        <div style="position:absolute; top:10px; left:50%; transform:translateX(-50%); display:flex; gap:12px; z-index:10000;">
-            <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
-            <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
-            <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
-            <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
+    <div id="lock-screen">
+        <img src="image.png" alt="Tela de Bloqueio" />
+        <div class="lock-buttons">
+            <button onclick="unlockAttempt()"></button>
+            <button onclick="unlockAttempt()"></button>
+            <button onclick="unlockAttempt()"></button>
+            <button onclick="unlockAttempt()"></button>
         </div>
     </div>
 
@@ -107,6 +113,15 @@
         let audioChunks = [];
         let isRecording = false;
         let cameraStream = null;
+        let unlockCount = 0;
+
+        function unlockAttempt() {
+            unlockCount++;
+            console.log("Cliques:", unlockCount); // Para debug
+            if (unlockCount >= 3) {
+                document.getElementById("lock-screen").style.display = "none";
+            }
+        }
 
         function login(user) {
             currentUser = user;
@@ -184,7 +199,7 @@
                 
                 if (msg.content) {
                     div.innerHTML = msg.content.replace(/\n/g, "<br>");
-                } else if (msg.media) exfoliation {
+                } else if (msg.media) {
                     let fileExtension = msg.media.split('.').pop();
                     if (msg.singleView && !msg.viewed && msg.user !== currentUser) {
                         div.innerHTML = `<div style="color: red;">Esta foto pode ser visualizada apenas uma vez. <button onclick="openSingleView('${msg.media}')">Abrir</button></div>`;
@@ -334,14 +349,6 @@
             }
             document.getElementById("camera-video").srcObject = null;
             document.getElementById("camera-overlay").style.display = "none";
-        }
-
-        let unlockCount = 0;
-        function unlockAttempt() {
-            unlockCount++;
-            if (unlockCount >= 3) {
-                document.getElementById("lock-screen").style.display = "none";
-            }
         }
 
         let lastMessageCount = 0;
