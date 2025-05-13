@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br"> 
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -74,9 +74,13 @@
             <div id="messageInput" class="message-input" contenteditable="true" placeholder="Digite uma mensagem..." onkeydown="handleKeyDown(event)"></div>
             <button onclick="sendMessage()">Enviar</button>
             <input type="file" id="fileInput" accept="image/*,video/*" onchange="sendMedia()">
-            <label for="fileInput">📷 Carregar</label>
+            <label for="fileInput">📷</label>
+            <button onclick="openCameraOverlay()">📸 Tirar Foto</button>
+            <!-- Novo botão para visualização única -->
             <input type="file" id="singleViewInput" accept="image/*,video/*" style="display: none;" onchange="sendSingleViewMedia()">
             <label for="singleViewInput" style="background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer;">📷🔂</label>
+
+            <!-- Botão de gravação de áudio -->
             <button id="recordButton" class="record-btn" onclick="toggleRecording()">🎤</button>
         </div>
     </div>
@@ -89,6 +93,15 @@
             <button onclick="closeOverlay()">Fechar</button>
         </div>
     </div>
+
+    <div class="overlay" id="camera-overlay">
+    <div class="overlay-content">
+        <video id="camera-video" autoplay playsinline style="max-width: 100%; border-radius: 8px;"></video>
+        <br>
+        <button onclick="takePhoto()">📷 Tirar Foto</button>
+        <button onclick="closeCameraOverlay()">Cancelar</button>
+    </div>
+</div>
 
     <script>
         let currentUser = "";
@@ -363,35 +376,54 @@ function updateTypingIndicator() {
 }
 setInterval(updateTypingIndicator, 500);
 
-    async function takePhoto() {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        const video = document.createElement('video');
-        video.srcObject = stream;
-        video.play();
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        // Exibir vídeo em um elemento de vídeo temporário
-        document.body.appendChild(video);
-        // Esperar um segundo para o vídeo carregar
-        setTimeout(() => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const photoBlob = canvas.toBlob(async (blob) => {
-                if (blob) {
-                    const formData = new FormData();
-                    formData.append("media", blob, "photo.jpg");
-                    formData.append("user", currentUser );
-                    await fetch("/save-media", { method: "POST", body: formData });
-                    loadMessages();
-                }
-            }, 'image/jpeg');
 
-            // Parar o stream de vídeo
-            stream.getTracks().forEach(track => track.stop());
-            document.body.removeChild(video);
-        }, 1000);
+let cameraStream;
+
+async function openCameraOverlay() {
+    const overlay = document.getElementById("camera-overlay");
+    const video = document.getElementById("camera-video");
+
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = cameraStream;
+        overlay.style.display = "flex";
+    } catch (err) {
+        alert("Erro ao acessar a câmera: " + err.message);
     }
+}
+
+function closeCameraOverlay() {
+    const overlay = document.getElementById("camera-overlay");
+    const video = document.getElementById("camera-video");
+
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+    }
+
+    video.srcObject = null;
+    overlay.style.display = "none";
+}
+
+async function takePhoto() {
+    const video = document.getElementById("camera-video");
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append("media", blob, "captura.jpg");
+        formData.append("user", currentUser);
+
+        await fetch("/save-media", { method: "POST", body: formData });
+
+        closeCameraOverlay();
+        loadMessages();
+    }, "image/jpeg", 0.95);
+}
 
 
     </script>
