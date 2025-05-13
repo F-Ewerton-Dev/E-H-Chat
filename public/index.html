@@ -82,6 +82,12 @@
 
             <!-- Botão de gravação de áudio -->
             <button id="recordButton" class="record-btn" onclick="toggleRecording()">🎤</button>
+
+            
+            <video id="video" width="320" height="240" autoplay></video>
+            <button id="capture">📷 Tirar Foto</button>
+            <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+            
         </div>
     </div>
 
@@ -366,6 +372,47 @@ function updateTypingIndicator() {
         .catch(err => console.error("Erro ao buscar status de digitação:", err));
 }
 setInterval(updateTypingIndicator, 500);
+
+
+
+
+const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const captureBtn = document.getElementById("capture");
+
+  // Inicia a câmera
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      video.srcObject = stream;
+    })
+    .catch(err => {
+      console.error("Erro ao acessar a câmera:", err);
+    });
+
+  // Tirar foto e enviar para o servidor
+  captureBtn.addEventListener("click", () => {
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(blob => {
+      const formData = new FormData();
+      formData.append("user", "SeuNomeAqui"); // Pode substituir por nome dinâmico
+      formData.append("media", blob, "foto.png");
+
+      fetch("/save-media", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Foto enviada com sucesso!");
+        } else {
+          alert("Erro ao enviar a foto.");
+        }
+      });
+    }, "image/png");
+  });
 
 
     </script>
