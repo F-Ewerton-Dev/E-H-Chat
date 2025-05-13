@@ -74,20 +74,10 @@
             <div id="messageInput" class="message-input" contenteditable="true" placeholder="Digite uma mensagem..." onkeydown="handleKeyDown(event)"></div>
             <button onclick="sendMessage()">Enviar</button>
             <input type="file" id="fileInput" accept="image/*,video/*" onchange="sendMedia()">
-            <label for="fileInput">📷</label>
-            
-            <!-- Novo botão para visualização única -->
+            <label for="fileInput">📷 Carregar</label>
             <input type="file" id="singleViewInput" accept="image/*,video/*" style="display: none;" onchange="sendSingleViewMedia()">
             <label for="singleViewInput" style="background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer;">📷🔂</label>
-
-            <!-- Botão de gravação de áudio -->
             <button id="recordButton" class="record-btn" onclick="toggleRecording()">🎤</button>
-
-            
-            <video id="video" width="320" height="240" autoplay></video>
-            <button id="capture">📷 Tirar Foto</button>
-            <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
-            
         </div>
     </div>
 
@@ -373,46 +363,35 @@ function updateTypingIndicator() {
 }
 setInterval(updateTypingIndicator, 500);
 
+    async function takePhoto() {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.play();
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        // Exibir vídeo em um elemento de vídeo temporário
+        document.body.appendChild(video);
+        // Esperar um segundo para o vídeo carregar
+        setTimeout(() => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const photoBlob = canvas.toBlob(async (blob) => {
+                if (blob) {
+                    const formData = new FormData();
+                    formData.append("media", blob, "photo.jpg");
+                    formData.append("user", currentUser );
+                    await fetch("/save-media", { method: "POST", body: formData });
+                    loadMessages();
+                }
+            }, 'image/jpeg');
 
-
-
-const video = document.getElementById("video");
-  const canvas = document.getElementById("canvas");
-  const captureBtn = document.getElementById("capture");
-
-  // Inicia a câmera
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-      video.srcObject = stream;
-    })
-    .catch(err => {
-      console.error("Erro ao acessar a câmera:", err);
-    });
-
-  // Tirar foto e enviar para o servidor
-  captureBtn.addEventListener("click", () => {
-    const context = canvas.getContext("2d");
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob(blob => {
-      const formData = new FormData();
-      formData.append("user", "SeuNomeAqui"); // Pode substituir por nome dinâmico
-      formData.append("media", blob, "foto.png");
-
-      fetch("/save-media", {
-        method: "POST",
-        body: formData
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert("Foto enviada com sucesso!");
-        } else {
-          alert("Erro ao enviar a foto.");
-        }
-      });
-    }, "image/png");
-  });
+            // Parar o stream de vídeo
+            stream.getTracks().forEach(track => track.stop());
+            document.body.removeChild(video);
+        }, 1000);
+    }
 
 
     </script>
