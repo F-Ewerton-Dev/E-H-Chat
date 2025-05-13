@@ -33,34 +33,25 @@
         .input-area button { background: #25d366; color: white; border: none; padding: 10px 15px; border-radius: 5px; margin-left: 5px; cursor: pointer; font-size: 14px; }
         .input-area input[type="file"] { display: none; }
         .input-area label { background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
-
-        /* Estilos para a caixa de visualização */
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; z-index: 1000; }
         .overlay-content { max-width: 90%; max-height: 90%; background: #1e1e1e; padding: 20px; border-radius: 10px; text-align: center; }
         .overlay-content img, .overlay-content video { max-width: 100%; max-height: 80vh; border-radius: 8px; }
         .overlay-content button { margin-top: 10px; padding: 10px 20px; background: #25d366; color: white; border: none; border-radius: 5px; cursor: pointer; }
-
-        /* Estilos para o botão de gravação */
         .record-btn { background: #ff4081; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-left: 5px; }
         .record-btn.recording { background: #ff0000; }
+        .input-area #takePhotoButton { background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-left: 5px; }
     </style>
 </head>
 <body>
-   
-<!-- Tela de bloqueio -->
-<div id="lock-screen" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; overflow:hidden;">
-    <!-- Imagem ocupa 100% da altura da tela -->
-    <img src="image.png" alt="Tela de Bloqueio" style="width:auto; height:100vh; display:block; margin:0 auto;" />
-
-    <!-- Botões invisíveis sobre os botões verdes da imagem -->
-    <div style="position:absolute; top:10px; left:50%; transform:translateX(-50%); display:flex; gap:12px; z-index:10000;">
-        <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
-        <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
-        <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
-        <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
+    <div id="lock-screen" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; overflow:hidden;">
+        <img src="image.png" alt="Tela de Bloqueio" style="width:auto; height:100vh; display:block; margin:0 auto;" />
+        <div style="position:absolute; top:10px; left:50%; transform:translateX(-50%); display:flex; gap:12px; z-index:10000;">
+            <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
+            <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
+            <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
+            <button onclick="unlockAttempt()" style="width:40px; height:40px; background:transparent; border:none;"></button>
+        </div>
     </div>
-</div>
-
     <div class="login-container" id="login-container">
         <h2>Escolha seu usuário</h2>
         <button class="ewerton-btn" onclick="login('Ewerton')">👨‍💻 Ewerton</button>
@@ -75,17 +66,13 @@
             <button onclick="sendMessage()">Enviar</button>
             <input type="file" id="fileInput" accept="image/*,video/*" onchange="sendMedia()">
             <label for="fileInput">📷</label>
-            
-            <!-- Novo botão para visualização única -->
-            <input type="file" id="singleViewInput" accept="image/*,video/*" style="display: none;" onchange="sendSingleViewMedia()">
+            <input type="file" id="singleViewInput" accept="image/*,video/*" style W3C Standard
+            ="display: none;" onchange="sendSingleViewMedia()">
             <label for="singleViewInput" style="background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer;">📷🔂</label>
-
-            <!-- Botão de gravação de áudio -->
             <button id="recordButton" class="record-btn" onclick="toggleRecording()">🎤</button>
+            <button id="takePhotoButton" onclick="openCamera()">📸 Tirar Foto</button>
         </div>
     </div>
-
-    <!-- Caixa de visualização -->
     <div class="overlay" id="overlay">
         <div class="overlay-content" id="overlay-content">
             <img id="overlay-image" src="" alt="Imagem">
@@ -93,14 +80,23 @@
             <button onclick="closeOverlay()">Fechar</button>
         </div>
     </div>
-
+    <div id="cameraOverlay" class="overlay" style="display: none;">
+        <div class="overlay-content">
+            <video id="cameraStream" autoplay playsinline style="max-width: 100%; border-radius: 8px;"></video>
+            <canvas id="photoCanvas" style="display: none;"></canvas>
+            <div style="margin-top: 10px;">
+                <button onclick="capturePhoto()">Capturar</button>
+                <button onclick="closeCamera()">Fechar</button>
+            </div>
+        </div>
+    </div>
     <script>
         let currentUser = "";
         let typingTimeout;
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
-
+        let cameraStream = null;
         function login(user) {
             currentUser = user;
             document.getElementById("login-container").style.display = "none";
@@ -109,149 +105,114 @@
             loadMessages();
         }
         document.getElementById("messageInput").addEventListener("input", () => {
-        sendTypingStatus(true);
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => sendTypingStatus(false), 1000);
+            sendTypingStatus(true);
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => sendTypingStatus(false), 1000);
         });
-
         async function sendTypingStatus(isTyping) {
             await fetch("/typing", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user: currentUser, typing: isTyping })
-        });
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user: currentUser, typing: isTyping })
+            });
         }
-
-        // Função para enviar mensagem
         async function sendMessage() {
             let text = document.getElementById("messageInput").innerText.trim();
             if (!text) return;
-
             await fetch("/save-message", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ user: currentUser, content: text })
             });
-            document.getElementById("messageInput").innerText = ""; // Limpa o campo de texto
+            document.getElementById("messageInput").innerText = "";
             loadMessages();
         }
-
-        // Função para enviar mídia
         async function sendMedia() {
             let fileInput = document.getElementById("fileInput");
             let file = fileInput.files[0];
             if (!file) return;
-
             let formData = new FormData();
             formData.append("media", file);
             formData.append("user", currentUser);
-
             await fetch("/save-media", { method: "POST", body: formData });
             fileInput.value = "";
             loadMessages();
         }
-
-        // Função para enviar mídia de visualização única
         async function sendSingleViewMedia() {
             let fileInput = document.getElementById("singleViewInput");
             let file = fileInput.files[0];
             if (!file) return;
-
             let formData = new FormData();
             formData.append("media", file);
             formData.append("user", currentUser);
-            formData.append("singleView", true); // Adiciona um campo para indicar visualização única
-
+            formData.append("singleView", true);
             await fetch("/save-single-view-media", { method: "POST", body: formData });
             fileInput.value = "";
             loadMessages();
         }
-
-        // Função para carregar mensagens
         async function loadMessages() {
             let response = await fetch("/load-messages");
             let messages = await response.json();
             let messagesContainer = document.getElementById("messages");
             messagesContainer.innerHTML = "";
-
             messages.forEach(msg => {
                 let div = document.createElement("div");
                 div.classList.add("message", msg.user.toLowerCase());
-                
                 if (msg.content) {
-                    // Substituir quebras de linha por <br> para exibir corretamente no HTML
                     div.innerHTML = msg.content.replace(/\n/g, "<br>");
                 } else if (msg.media) {
                     let fileExtension = msg.media.split('.').pop();
                     if (msg.singleView && !msg.viewed && msg.user !== currentUser) {
-                        // Exibe o botão "Abrir" apenas para o outro usuário
                         div.innerHTML = `<div style="color: red;">Esta foto pode ser visualizada apenas uma vez. <button onclick="openSingleView('${msg.media}')">Abrir</button></div>`;
                     } else if (msg.viewed && msg.user === currentUser) {
-                        // Exibe uma mensagem de confirmação para o remetente
                         div.innerHTML = `<div style="color: #25d366;">Sua mídia foi visualizada.</div>`;
                     } else if (!msg.singleView) {
-                        // Exibe a mídia normalmente se não for de visualização única
                         if (["mp4", "webm", "ogg"].includes(fileExtension)) {
                             div.innerHTML = `<video controls style="max-width: 100%; border-radius: 8px;"><source src="/uploads/${msg.media}" type="video/${fileExtension}"></video>`;
                         } else if (["mp3", "wav", "ogg"].includes(fileExtension)) {
-                            div.innerHTML = `<audio controls style="max-width: 100%;"><source src="/uploads/${msg.media}" type="audio/${fileExtension}"></audio>`;
+                            div.innerHTML = `<audio controls style="max-width: 100%;"><source src="/Uploads/${msg.media}" type="audio/${fileExtension}"></audio>`;
                         } else {
-                            div.innerHTML = `<img src="/uploads/${msg.media}" style="max-width: 100%; border-radius: 8px;">`;
+                            div.innerHTML = `<img src="/Uploads/${msg.media}" style="max-width: 100%; border-radius: 8px;">`;
                         }
                     }
                 }
                 messagesContainer.appendChild(div);
             });
         }
-
-        // Função para abrir a mídia na caixa de visualização
         async function openSingleView(media) {
             const fileExtension = media.split('.').pop();
             const overlay = document.getElementById("overlay");
             const overlayImage = document.getElementById("overlay-image");
             const overlayVideo = document.getElementById("overlay-video");
-
             if (["mp4", "webm", "ogg"].includes(fileExtension)) {
                 overlayImage.style.display = "none";
                 overlayVideo.style.display = "block";
-                overlayVideo.src = `/uploads/${media}`;
+                overlayVideo.src = `/Uploads/${media}`;
             } else {
                 overlayVideo.style.display = "none";
                 overlayImage.style.display = "block";
-                overlayImage.src = `/uploads/${media}`;
+                overlayImage.src = `/Uploads/${media}`;
             }
-
             overlay.style.display = "flex";
-
-            // Marcar a mídia como visualizada no servidor
             await fetch("/mark-as-viewed", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ media: media, viewer: currentUser })
             });
-
-            // Recarregar as mensagens após a visualização
             loadMessages();
         }
-
-        // Função para fechar a caixa de visualização
         function closeOverlay() {
             const overlay = document.getElementById("overlay");
             overlay.style.display = "none";
         }
-
-        // Função para capturar o evento de tecla "Enter"
         function handleKeyDown(event) {
             if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault(); // Impede a quebra de linha padrão
-                sendMessage(); // Envia a mensagem
+                event.preventDefault();
+                sendMessage();
             }
         }
-
-        // Função para iniciar/parar a gravação de áudio
         async function toggleRecording() {
             if (!isRecording) {
-                // Iniciar gravação
                 audioChunks = [];
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
@@ -263,7 +224,6 @@
                     const formData = new FormData();
                     formData.append("media", audioBlob, "audio.wav");
                     formData.append("user", currentUser);
-
                     await fetch("/save-media", { method: "POST", body: formData });
                     loadMessages();
                 };
@@ -272,102 +232,139 @@
                 document.getElementById("recordButton").classList.add("recording");
                 document.getElementById("recordButton").innerText = "⏹ Parar Gravação";
             } else {
-                // Parar gravação
                 mediaRecorder.stop();
                 isRecording = false;
                 document.getElementById("recordButton").classList.remove("recording");
                 document.getElementById("recordButton").innerText = "🎤 Gravar Áudio";
             }
         }
-
         let unlockCount = 0;
-function unlockAttempt() {
-    unlockCount++;
-    if (unlockCount >= 3) {
-        document.getElementById("lock-screen").style.display = "none";
-    }
-}
-
-let lastMessageCount = 0;
-let lastNotifiedHellen = "";
-
-async function autoUpdateMessages() {
-    try {
-        let response = await fetch("/load-messages");
-        let messages = await response.json();
-        let messagesContainer = document.getElementById("messages");
-
-        // Só atualiza o DOM se mudou o número de mensagens
-        if (messages.length !== lastMessageCount) {
-            messagesContainer.innerHTML = "";
-            messages.forEach(msg => {
-                let div = document.createElement("div");
-                div.classList.add("message", msg.user.toLowerCase());
-                if (msg.content) {
-                    div.innerHTML = msg.content.replace(/\n/g, "<br>");
-                } else if (msg.media) {
-                    let fileExtension = msg.media.split('.').pop();
-                    if (["mp4", "webm", "ogg"].includes(fileExtension)) {
-                        div.innerHTML = `<video controls style="max-width: 100%; border-radius: 8px;"><source src="/uploads/${msg.media}" type="video/${fileExtension}"></video>`;
-                    } else if (["mp3", "wav", "ogg"].includes(fileExtension)) {
-                        div.innerHTML = `<audio controls style="max-width: 100%;"><source src="/uploads/${msg.media}" type="audio/${fileExtension}"></audio>`;
-                    } else {
-                        div.innerHTML = `<img src="/uploads/${msg.media}" style="max-width: 100%; border-radius: 8px;">`;
+        function unlockAttempt() {
+            unlockCount++;
+            if (unlockCount >= 3) {
+                document.getElementById("lock-screen").style.display = "none";
+            }
+        }
+        async function openCamera() {
+            try {
+                const video = document.getElementById("cameraStream");
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" },
+                    audio: false
+                });
+                video.srcObject = cameraStream;
+                document.getElementById("cameraOverlay").style.display = "flex";
+            } catch (err) {
+                console.error("Erro ao acessar a câmera:", err);
+                alert("Não foi possível acessar a câmera. Verifique as permissões.");
+            }
+        }
+        async function capturePhoto() {
+            const video = document.getElementById("cameraStream");
+            const canvas = document.getElementById("photoCanvas");
+            const context = canvas.getContext("2d");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(async (blob) => {
+                try {
+                    const formData = new FormData();
+                    formData.append("media", blob, `photo_${Date.now()}.jpg`);
+                    formData.append("user", currentUser);
+                    await fetch("/save-media", {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            "Cache-Control": "no-store, no-cache, must-revalidate, private"
+                        }
+                    });
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    canvas.width = 0;
+                    canvas.height = 0;
+                    closeCamera();
+                    loadMessages();
+                } catch (err) {
+                    console.error("Erro ao enviar a foto:", err);
+                    alert("Erro ao enviar a foto.");
+                }
+            }, "image/jpeg", 0.8);
+        }
+        function closeCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            const video = document.getElementById("cameraStream");
+            video.srcObject = null;
+            document.getElementById("cameraOverlay").style.display = "none";
+        }
+        let lastMessageCount = 0;
+        let lastNotifiedHellen = "";
+        async function autoUpdateMessages() {
+            try {
+                let response = await fetch("/load-messages");
+                let messages = await response.json();
+                let messagesContainer = document.getElementById("messages");
+                if (messages.length !== lastMessageCount) {
+                    messagesContainer.innerHTML = "";
+                    messages.forEach(msg => {
+                        let div = document.createElement("div");
+                        div.classList.add("message", msg.user.toLowerCase());
+                        if (msg.content) {
+                            div.innerHTML = msg.content.replace(/\n/g, "<br>");
+                        } else if (msg.media) {
+                            let fileExtension = msg.media.split('.').pop();
+                            if (["mp4", "webm", "ogg"].includes(fileExtension)) {
+                                div.innerHTML = `<video controls style="max-width: 100%; border-radius: 8px;"><source src="/Uploads/${msg.media}" type="video/${fileExtension}"></video>`;
+                            } else if (["mp3", "wav", "ogg"].includes(fileExtension)) {
+                                div.innerHTML = `<audio controls style="max-width: 100%;"><source src="/Uploads/${msg.media}" type="audio/${fileExtension}"></audio>`;
+                            } else {
+                                div.innerHTML = `<img src="/Uploads/${msg.media}" style="max-width: 100%; border-radius: 8px;">`;
+                            }
+                        }
+                        messagesContainer.appendChild(div);
+                    });
+                    lastMessageCount = messages.length;
+                }
+                let hellenMessages = messages.filter(m => m.user === "Hellen");
+                if (hellenMessages.length > 0) {
+                    let lastHellen = hellenMessages[hellenMessages.length - 1];
+                    let content = lastHellen.content || "Enviou uma mídia";
+                    if (lastHellen.content !== lastNotifiedHellen) {
+                        if (Notification.permission === "granted") {
+                            new Notification("Nova mensagem de Hellen", {
+                                body: content,
+                                icon: "/path/to/icon.png"
+                            });
+                        }
+                        lastNotifiedHellen = lastHellen.content;
                     }
                 }
-                messagesContainer.appendChild(div);
-            });
-            lastMessageCount = messages.length;
-        }
-
-        // Verifica notificações de Hellen
-        let hellenMessages = messages.filter(m => m.user === "Hellen");
-        if (hellenMessages.length > 0) {
-            let lastHellen = hellenMessages[hellenMessages.length - 1];
-            let content = lastHellen.content || "Enviou uma mídia";
-
-            if (lastHellen.content !== lastNotifiedHellen) {
-                if (Notification.permission === "granted") {
-                    new Notification("Nova mensagem de Hellen", {
-                        body: content,
-                        icon: "/path/to/icon.png"
-                    });
-                }
-                lastNotifiedHellen = lastHellen.content;
+            } catch (err) {
+                console.error("Erro ao carregar mensagens:", err);
             }
         }
-    } catch (err) {
-        console.error("Erro ao carregar mensagens:", err);
-    }
-}
-
-// Inicializa notificações
-if ("Notification" in window) {
-    Notification.requestPermission();
-}
-
-// Atualiza a cada 5 segundos
-setInterval(autoUpdateMessages, 1000);
-
-let dotCount = 0;
-function updateTypingIndicator() {
-    fetch("/typing-status")
-        .then(res => res.json())
-        .then(status => {
-            let otherUser = currentUser === "Hellen" ? "Ewerton" : "Hellen";
-            if (status[otherUser]) {
-                dotCount = (dotCount + 1) % 4;
-                let dots = ".".repeat(dotCount);
-                document.getElementById("typing-indicator").innerText = `${otherUser} está digitando${dots}`;
-            } else {
-                document.getElementById("typing-indicator").innerText = "";
-            }
-        })
-        .catch(err => console.error("Erro ao buscar status de digitação:", err));
-}
-setInterval(updateTypingIndicator, 500);
-
-
+        if ("Notification" in window) {
+            Notification.requestPermission();
+        }
+        setInterval(autoUpdateMessages, 1000);
+        let dotCount = 0;
+        function updateTypingIndicator() {
+            fetch("/typing-status")
+                .then(res => res.json())
+                .then(status => {
+                    let otherUser = currentUser === "Hellen" ? "Ewerton" : "Hellen";
+                    if (status[otherUser]) {
+                        dotCount = (dotCount + 1) % 4;
+                        let dots = ".".repeat(dotCount);
+                        document.getElementById("typing-indicator").innerText = `${otherUser} está digitando${dots}`;
+                    } else {
+                        document.getElementById("typing-indicator").innerText = "";
+                    }
+                })
+                .catch(err => console.error("Erro ao buscar status de digitação:", err));
+        }
+        setInterval(updateTypingIndicator, 500);
     </script>
 </body>
 </html>
