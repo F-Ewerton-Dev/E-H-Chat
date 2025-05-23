@@ -1,3 +1,4 @@
+<DOCUMENT filename="index.html">
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -5,20 +6,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #121212; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: white; width: 100vw; }
-        .container { width: 100vw; height: 100vh; background: #1e1e1e; display: none; flex-direction: column; }
-        .login-container { text-align: center; background: #1e1e1e; padding: 20px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); width: 90%; max-width: 350px; }
-        .login-container button { padding: 12px; width: 100%; margin: 10px 0; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        .ewerton-btn { background: #25d366; color: white; }
-        .hellen-btn { background: #ff4081; color: white; } 
-        .header { background: #075e54; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; }
-        .messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; }
-        .message { padding: 10px; border-radius: 8px; margin: 5px; max-width: 70%; word-wrap: break-word; font-size: 14px; position: relative; cursor: pointer; white-space: pre-wrap; }
-        .ewerton { background: #0b8043; align-self: flex-start; color: white; }
-        .hellen { background: #282828; align-self: flex-end; color: white; }
-        .timestamp { font-size: 10px; color: #ccc; position: absolute; bottom: -15px; right: 5px; }
-        .input-area { display: flex; align-items: center; padding: 10px; background: #1e1e1e; border-top: 1px solid #333; }
-        .input-area .message-input { 
+        * {
+            box-sizing: border-box;
+        }
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #121212; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            color: white; 
+            width: 100vw; 
+        }
+        .container { 
+            width: 100vw; 
+            height: 100vh; 
+            background: #1e1e1e; 
+            display: none; 
+            flex-direction: column; 
+        }
+        .login-container { 
+            text-align: center; 
+            background: #1e1e1e; 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); 
+            width: 90%; 
+            max-width: 350px; 
+        }
+        .login-container button { 
+            padding: 12px; 
+            width: 100%; 
+            margin: 10px 0; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px; 
+        }
+        .ewerton-btn { 
+            background: #25d366; 
+            color: white; 
+        }
+        .hellen-btn { 
+            background: #ff4081; 
+            color: white; 
+        } 
+        .header { 
+            background: #075e54; 
+            color: white; 
+            padding: 15px; 
+            text-align: center; 
+            font-size: 18px; 
+            font-weight: bold; 
+        }
+        .messages { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 10px; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .message { 
+            padding: 10px; 
+            border-radius: 8px; 
+            margin: 5px; 
+            max-width: 70%; 
+            word-wrap: break-word; 
+            font-size: 14px; 
+            position: relative; 
+            cursor: pointer; 
+            white-space: pre-wrap; 
+        }
+        .ewerton { 
+            background: #0b8043; 
+            align-self: flex-start; 
+            color: white; 
+        }
+        .hellen { 
+            background: #282828; 
+            align-self: flex-end; 
+            color: white; 
+        }
+        .timestamp { 
+            font-size: 10px; 
+            color: #ccc; 
+            position: absolute; 
+            bottom: -15px; 
+            right: 5px; 
+        }
+        .input-area { 
+            display: flex; 
+            flex-direction: column; 
+            padding: 10px; 
+            background: #1e1e1e; 
+            border-top: 1px solid #333; 
+            width: 100%; 
+            max-width: 100%;
+        }
+        .input-send-container { 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            width: 100%; 
+            max-width: 100%;
+        }
+        .input-send-container .message-input { 
             flex: 1; 
             padding: 10px; 
             border: 1px solid #444; 
@@ -29,27 +123,134 @@
             outline: none; 
             max-height: 100px; 
             overflow-y: auto; 
+            max-width: 100%;
+            min-width: 0;
         }
-         .input-area button { background: #25d366; color: white; border: none; padding: 10px 15px; border-radius: 5px; margin-left: 5px; cursor: pointer; font-size: 14px; }
-        .input-area input[type="file"] { display: none; }
-        .input-area label { background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+        .input-send-container button { 
+            background: #25d366; 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 14px; 
+        }
+        .buttons-container { 
+            display: flex; 
+            gap: 5px; 
+            margin-bottom: 10px; 
+            justify-content: flex-start; 
+            flex-wrap: wrap;
+        }
+        .buttons-container label, .buttons-container button { 
+            background: #25d366; 
+            color: white; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 14px; 
+        }
+        .input-area input[type="file"] { 
+            display: none; 
+        }
+        .record-btn { 
+            background: #ff4081; 
+            color: white; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        .record-btn.recording { 
+            background: #ff0000; 
+        }
+
+        /* Media query para telas menores */
+        @media (max-width: 480px) {
+            .input-send-container .message-input {
+                font-size: 12px;
+                padding: 8px;
+            }
+            .input-send-container button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            .buttons-container label, .buttons-container button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
 
         /* Estilos para a caixa de visualização */
-        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; z-index: 1000; }
-        .overlay-content { max-width: 90%; max-height: 90%; background: #1e1e1e; padding: 20px; border-radius: 10px; text-align: center; }
-        .overlay-content img, .overlay-content video { max-width: 100%; max-height: 80vh; border-radius: 8px; }
-        .overlay-content button { margin-top: 10px; padding: 10px 20px; background: #25d366; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.8); 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000; 
+        }
+        .overlay-content { 
+            max-width: 90%; 
+            max-height: 90%; 
+            background: #1e1e1e; 
+            padding: 20px; 
+            border-radius: 10px; 
+            text-align: center; 
+        }
+        .overlay-content img, .overlay-content video { 
+            max-width: 100%; 
+            max-height: 80vh; 
+            border-radius: 8px; 
+        }
+        .overlay-content button { 
+            margin-top: 10px; 
+            padding: 10px 20px; 
+            background: #25d366; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
 
         /* Estilos para a interface da câmera */
-        .camera-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
-        .camera-overlay video { max-width: 90%; max-height: 70vh; border-radius: 8px; }
-        .camera-controls { display: flex; gap: 10px; margin-top: 10px; }
-        .camera-controls select, .camera-controls button { padding: 10px; background: #25d366; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .camera-controls select { background: #333; }
-
-        /* Estilos para o botão de gravação */
-        .record-btn { background: #ff4081; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin-left: 5px; }
-        .record-btn.recording { background: #ff0000; }
+        .camera-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0, 0, 0, 0.8); 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000; 
+            flex-direction: column; 
+        }
+        .camera-overlay video { 
+            max-width: 90%; 
+            max-height: 70vh; 
+            border-radius: 8px; 
+        }
+        .camera-controls { 
+            display: flex; 
+            gap: 10px; 
+            margin-top: 10px; 
+        }
+        .camera-controls select, .camera-controls button { 
+            padding: 10px; 
+            background: #25d366; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+        }
+        .camera-controls select { 
+            background: #333; 
+        }
     </style>
 </head>
 <body>
@@ -74,14 +275,18 @@
         <div class="messages" id="messages"></div>
         <div id="typing-indicator" style="padding:5px 10px; font-size:12px; color:#ccc;"></div>
         <div class="input-area">
-            <div id="messageInput" class="message-input" contenteditable="true" placeholder="Digite uma mensagem..." onkeydown="handleKeyDown(event)"></div>
-            <button onclick="sendMessage()">Enviar</button>
-            <input type="file" id="fileInput" accept="image/*,video/*" onchange="sendMedia()">
-            <label for="fileInput">📷</label>
-            <input type="file" id="singleViewInput" accept="image/*,video/*" style="display: none;" onchange="sendSingleViewMedia()">
-            <label for="singleViewInput" style="background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer;">📷🔂</label>
-            <button onclick="openCamera()" style="background: #25d366; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer;">📸</button>
-            <button id="recordButton" class="record-btn" onclick="toggleRecording()">🎤</button>
+            <div class="buttons-container">
+                <input type="file" id="fileInput" accept="image/*,video/*" onchange="sendMedia()">
+                <label for="fileInput">📷</label>
+                <input type="file" id="singleViewInput" accept="image/*,video/*" style="display: none;" onchange="sendSingleViewMedia()">
+                <label for="singleViewInput">📷🔂</label>
+                <button onclick="openCamera()">📸🔓</button>
+                <button id="recordButton" class="record-btn" onclick="toggleRecording()">🎤</button>
+            </div>
+            <div class="input-send-container">
+                <div id="messageInput" class="message-input" contenteditable="true" placeholder="Digite uma mensagem..." onkeydown="handleKeyDown(event)"></div>
+                <button onclick="sendMessage()">Enviar</button>
+            </div>
         </div>
     </div>
 
@@ -267,15 +472,16 @@
             }
         }
 
-        // Funções para a câmera
         async function openCamera() {
             const cameraOverlay = document.getElementById("camera-overlay");
             const video = document.getElementById("camera-video");
             const cameraSelect = document.getElementById("camera-select");
             cameraOverlay.style.display = "flex";
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "user" } } });
                 video.srcObject = stream;
+                video.style.transform = "scaleX(-1)"; // Inverte a imagem da câmera frontal
+
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === "videoinput");
                 cameraSelect.innerHTML = videoDevices.map(device => 
@@ -297,6 +503,7 @@
                     video: { deviceId: cameraSelect.value } 
                 });
                 video.srcObject = stream;
+                video.style.transform = "scaleX(-1)"; // Inverte a imagem da câmera frontal
             } catch (err) {
                 console.error("Erro ao mudar a câmera:", err);
             }
@@ -312,15 +519,34 @@
                 const formData = new FormData();
                 formData.append("media", blob, "photo.jpg");
                 formData.append("user", currentUser);
-                if (singleView) {
-                    formData.append("singleView", true);
-                    await fetch("/save-single-view-media", { method: "POST", body: formData });
-                } else {
-                    await fetch("/save-media", { method: "POST", body: formData });
-                }
-                closeCamera();
-                loadMessages();
+                
+                // Exibir a imagem capturada em um overlay
+                const overlay = document.getElementById("overlay");
+                const overlayImage = document.getElementById("overlay-image");
+                overlayImage.src = URL.createObjectURL(blob);
+                overlay.style.display = "flex";
+
+                // Adicionar botões de ação
+                overlay.innerHTML += `
+                    <button onclick="sendCapturedPhoto('${singleView}')">Enviar</button>
+                    <button onclick="closeOverlay()">Tirar Outra</button>
+                `;
             }, "image/jpeg");
+        }
+
+        function sendCapturedPhoto(singleView) {
+            const overlayImage = document.getElementById("overlay-image");
+            const formData = new FormData();
+            formData.append("media", overlayImage.src);
+            formData.append("user", currentUser);
+            if (singleView) {
+                formData.append("singleView", true);
+                fetch("/save-single-view-media", { method: "POST", body: formData });
+            } else {
+                fetch("/save-media", { method: "POST", body: formData });
+            }
+            closeOverlay();
+            loadMessages();
         }
 
         function closeCamera() {
@@ -420,3 +646,4 @@
     </script>
 </body>
 </html>
+</DOCUMENT>
