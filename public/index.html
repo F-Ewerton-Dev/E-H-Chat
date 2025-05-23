@@ -413,6 +413,7 @@
             const overlay = document.getElementById("overlay");
             const overlayImage = document.getElementById("overlay-image");
             const overlayVideo = document.getElementById("overlay-video");
+            const overlayContent = document.getElementById("overlay-content");
             if (["mp4", "webm", "ogg"].includes(fileExtension)) {
                 overlayImage.style.display = "none";
                 overlayVideo.style.display = "block";
@@ -422,6 +423,12 @@
                 overlayImage.style.display = "block";
                 overlayImage.src = `/Uploads/${media}`;
             }
+            // Resetar o overlay-content para conter apenas a mídia e o botão Fechar
+            overlayContent.innerHTML = `
+                <img id="overlay-image" src="${overlayImage.src}" alt="Imagem" style="display: ${overlayImage.style.display};">
+                <video id="overlay-video" controls style="display: ${overlayVideo.style.display};" src="${overlayVideo.src}"></video>
+                <button onclick="closeOverlay()">Fechar</button>
+            `;
             overlay.style.display = "flex";
             await fetch("/mark-as-viewed", {
                 method: "POST",
@@ -433,6 +440,19 @@
 
         function closeOverlay() {
             const overlay = document.getElementById("overlay");
+            const overlayContent = document.getElementById("overlay-content");
+            const overlayImage = document.getElementById("overlay-image");
+            const overlayVideo = document.getElementById("overlay-video");
+            overlayImage.src = "";
+            overlayVideo.src = "";
+            overlayImage.style.display = "none";
+            overlayVideo.style.display = "none";
+            // Resetar o overlay-content para o estado inicial
+            overlayContent.innerHTML = `
+                <img id="overlay-image" src="" alt="Imagem">
+                <video id="overlay-video" controls style="display: none;"></video>
+                <button onclick="closeOverlay()">Fechar</button>
+            `;
             overlay.style.display = "none";
         }
 
@@ -479,7 +499,7 @@
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "user" } } });
                 video.srcObject = stream;
-                video.style.transform = "scaleX(-1)"; // Inverter apenas o vídeo para visualização
+                // Removido video.style.transform = "scaleX(-1)"; para evitar inversão
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === "videoinput");
                 cameraSelect.innerHTML = videoDevices.map(device => 
@@ -501,7 +521,7 @@
                     video: { deviceId: cameraSelect.value } 
                 });
                 video.srcObject = stream;
-                video.style.transform = "scaleX(-1)"; // Inverter apenas o vídeo para visualização
+                // Removido video.style.transform = "scaleX(-1)"; para evitar inversão
             } catch (err) {
                 console.error("Erro ao mudar a câmera:", err);
             }
@@ -533,7 +553,7 @@
                     <img id="overlay-image" src="${overlayImage.src}" alt="Imagem capturada" style="max-width: 100%; border-radius: 8px;">
                     <div style="margin-top: 10px;">
                         <button onclick="sendCapturedPhoto(${singleView})">Enviar</button>
-                        <button onclick="closeOverlay()">Tirar Outra</button>
+                        <button onclick="closeOverlayAndReopenCamera()">Tirar Outra</button>
                         <button onclick="closeOverlay()">Fechar</button>
                     </div>
                 `;
@@ -562,6 +582,11 @@
             }
             closeOverlay();
             loadMessages();
+        }
+
+        function closeOverlayAndReopenCamera() {
+            closeOverlay();
+            openCamera();
         }
 
         function closeCamera() {
