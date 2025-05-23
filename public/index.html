@@ -1,4 +1,3 @@
-<DOCUMENT filename="index.html">
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -480,8 +479,7 @@
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "user" } } });
                 video.srcObject = stream;
-                video.style.transform = "scaleX(-1)"; // Inverte a imagem da câmera frontal
-
+                video.style.transform = "scaleX(-1)"; // Inverter apenas o vídeo para visualização
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === "videoinput");
                 cameraSelect.innerHTML = videoDevices.map(device => 
@@ -503,7 +501,7 @@
                     video: { deviceId: cameraSelect.value } 
                 });
                 video.srcObject = stream;
-                video.style.transform = "scaleX(-1)"; // Inverte a imagem da câmera frontal
+                video.style.transform = "scaleX(-1)"; // Inverter apenas o vídeo para visualização
             } catch (err) {
                 console.error("Erro ao mudar a câmera:", err);
             }
@@ -514,36 +512,53 @@
             const canvas = document.createElement("canvas");
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            canvas.getContext("2d").drawImage(video, 0, 0);
+
+            // Desenhar a imagem no canvas sem inversão
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
             canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append("media", blob, "photo.jpg");
-                formData.append("user", currentUser);
-                
-                // Exibir a imagem capturada em um overlay
                 const overlay = document.getElementById("overlay");
+                const overlayContent = document.getElementById("overlay-content");
                 const overlayImage = document.getElementById("overlay-image");
+                const overlayVideo = document.getElementById("overlay-video");
+
+                // Configurar a imagem capturada no overlay
                 overlayImage.src = URL.createObjectURL(blob);
+                overlayImage.style.display = "block";
+                overlayVideo.style.display = "none";
+
+                // Limpar o conteúdo do overlay-content e adicionar a imagem e os botões
+                overlayContent.innerHTML = `
+                    <img id="overlay-image" src="${overlayImage.src}" alt="Imagem capturada" style="max-width: 100%; border-radius: 8px;">
+                    <div style="margin-top: 10px;">
+                        <button onclick="sendCapturedPhoto(${singleView})">Enviar</button>
+                        <button onclick="closeOverlay()">Tirar Outra</button>
+                        <button onclick="closeOverlay()">Fechar</button>
+                    </div>
+                `;
+
                 overlay.style.display = "flex";
 
-                // Adicionar botões de ação
-                overlay.innerHTML += `
-                    <button onclick="sendCapturedPhoto('${singleView}')">Enviar</button>
-                    <button onclick="closeOverlay()">Tirar Outra</button>
-                `;
+                // Fechar a câmera se for uma foto única
+                if (singleView) {
+                    closeCamera();
+                }
             }, "image/jpeg");
         }
 
-        function sendCapturedPhoto(singleView) {
+        async function sendCapturedPhoto(singleView) {
             const overlayImage = document.getElementById("overlay-image");
+            const response = await fetch(overlayImage.src);
+            const blob = await response.blob();
             const formData = new FormData();
-            formData.append("media", overlayImage.src);
+            formData.append("media", blob, "photo.jpg");
             formData.append("user", currentUser);
             if (singleView) {
                 formData.append("singleView", true);
-                fetch("/save-single-view-media", { method: "POST", body: formData });
+                await fetch("/save-single-view-media", { method: "POST", body: formData });
             } else {
-                fetch("/save-media", { method: "POST", body: formData });
+                await fetch("/save-media", { method: "POST", body: formData });
             }
             closeOverlay();
             loadMessages();
@@ -646,4 +661,3 @@
     </script>
 </body>
 </html>
-</DOCUMENT>
