@@ -267,7 +267,7 @@
     <div class="login-container" id="login-container">
         <h2>Escolha seu usuário</h2>
         <button class="ewerton-btn" onclick="login('Ewerton')">👨‍💻 Ewerton</button>
-        <button class="hellen-btn" onclick="login('Hellen')">👩‍🦰 Hellen</button>
+        <button class="hellen-btn" onclick="login('Hellen')">👩‍🦰 Hellen </button>
     </div>
     <div class="container" id="chat-container">
         <div class="header" id="chat-title"></div>
@@ -530,8 +530,8 @@
         async function capturePhoto(singleView) {
             const video = document.getElementById("camera-video");
             const canvas = document.createElement("canvas");
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            canvas.width = video.videoWidth || 1920;
+            canvas.height = video.videoHeight || 1080;
 
             // Desenhar a imagem no canvas sem inversão
             const ctx = canvas.getContext("2d");
